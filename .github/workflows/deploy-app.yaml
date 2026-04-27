@@ -1,0 +1,36 @@
+name: Deploy App
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install yc CLI
+        run: |
+          curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
+          echo "$HOME/yandex-cloud/bin" >> $GITHUB_PATH
+
+      - name: Auth in YC
+        run: |
+          echo "${{ secrets.YC_KEY }}" > key.json
+          yc config set service-account-key key.json
+
+      - name: Get kubeconfig
+        run: |
+          yc managed-kubernetes cluster get-credentials \
+            --id catvdvccu2p02r6q66si \
+            --external
+
+      - name: Deploy app
+        run: |
+          kubectl apply -f manifests/deployment.yaml
+
+      - name: Check pods
+        run: |
+          kubectl get pods

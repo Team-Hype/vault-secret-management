@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auto-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auto-app
+  template:
+    metadata:
+      labels:
+        app: auto-app
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "app"
+        vault.hashicorp.com/agent-inject-secret-config.txt: "secret/data/app"
+    spec:
+      serviceAccountName: default
+      containers:
+      - name: app
+        image: busybox
+        command: ["sh", "-c", "sleep 3600"]
