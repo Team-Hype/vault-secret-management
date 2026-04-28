@@ -16,7 +16,7 @@ The system allows applications to dynamically retrieve secrets without storing t
 * GitHub Actions for CI/CD
 
 Secrets flow:
-Pod → Vault Agent → Vault → Secret file inside container
+Pod → Kubernetes ServiceAccount JWT → Vault (Kubernetes Auth) → Vault Agent → Vault API → Secret → File in container
 
 ---
 
