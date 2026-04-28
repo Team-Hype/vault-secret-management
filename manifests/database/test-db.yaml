@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-dev
+spec:
+  serviceName: postgres-dev
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-dev
+
+  template:
+    metadata:
+      labels:
+        app: postgres-dev
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "postgres-dev"
+        vault.hashicorp.com/agent-inject-template-db.sh: |
+          {{- with secret "secret/data/postgres/dev" -}}
+          export POSTGRES_DB={{ .Data.data.POSTGRES_DB }}
+          export POSTGRES_USER={{ .Data.data.POSTGRES_USER }}
+          export POSTGRES_PASSWORD={{ .Data.data.POSTGRES_PASSWORD }}
+          {{- end }}
+
+    spec:
+      serviceAccountName: postgres-dev-sa
+
+      containers:
+        - name: postgres
+          image: postgres:15
+          command:
+            - "sh"
+            - "-c"
+            - |
+              . /vault/secrets/db.sh && \
+              docker-entrypoint.sh postgres
+          env:
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi

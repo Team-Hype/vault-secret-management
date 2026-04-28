@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-prod
+spec:
+  serviceName: postgres-prod
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-prod
+
+  template:
+    metadata:
+      labels:
+        app: postgres-prod
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "postgres-prod"
+        vault.hashicorp.com/agent-inject-template-db.sh: |
+          {{- with secret "secret/data/postgres/prod" -}}
+          export POSTGRES_DB={{ .Data.data.POSTGRES_DB }}
+          export POSTGRES_USER={{ .Data.data.POSTGRES_USER }}
+          export POSTGRES_PASSWORD={{ .Data.data.POSTGRES_PASSWORD }}
+          {{- end }}
+
+    spec:
+      serviceAccountName: postgres-prod-sa
+
+      containers:
+      - name: postgres
+        image: postgres:15
+        command:
+          - "sh"
+          - "-c"
+          - |
+            . /vault/secrets/db.sh && \
+            docker-entrypoint.sh postgres
+        env:
+          - name: PGDATA
+            value: /var/lib/postgresql/data/pgdata
+
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi
