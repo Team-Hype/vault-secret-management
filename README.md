@@ -6,6 +6,7 @@ This project demonstrates secure secrets management using HashiCorp Vault integr
 
 The system allows applications to dynamically retrieve secrets without storing them in source code, Kubernetes manifests, or CI pipelines.
 
+[Here you can find full project report](docs/Report.md)
 ---
 
 ## Architecture
