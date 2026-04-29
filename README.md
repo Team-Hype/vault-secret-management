@@ -11,6 +11,8 @@ The system allows applications to dynamically retrieve secrets without storing t
 
 ## Architecture
 
+![Architecture scheme](meow.png)
+
 * Kubernetes cluster (Yandex Cloud)
 * HashiCorp Vault deployed via Helm
 * Vault Agent Injector for secret delivery
